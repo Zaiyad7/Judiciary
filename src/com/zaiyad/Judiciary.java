@@ -5,7 +5,8 @@ import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.util.List;
-
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 public class Judiciary {
 
     // List of attributes
@@ -36,14 +37,29 @@ public class Judiciary {
 
         }
         this.pdfURL = urls[51];
+        System.out.println(this.pdfURL);
 
 
     }
     public void parseJudiciaryPage() {
         final Elements ps = document.select("p[style*=center]");
         String caseData = ps.text();
-        this.courtName = caseData.substring(caseData.indexOf("CROWN"),caseData.indexOf("AT"));
-        this.dateOfTrial = caseData.substring(caseData.indexOf("1"),caseData.indexOf("SEN"));
+        System.out.println(caseData);
+        Pattern pt = Pattern.compile("\\s\\w{5}\\s\\w{5}");
+        Matcher mt = pt.matcher(caseData);
+        boolean matchFound = mt.find();
+        String court = mt.group();
+        Pattern pt1 = Pattern.compile("\\d+\\s\\w+\\s\\d+");
+        Matcher mt1 = pt1.matcher(caseData);
+        boolean mt1found = mt1.find();
+        String date = mt1.group();
+
+
+
+
+
+        this.courtName = court;
+        this.dateOfTrial = date;
         this.judgeName =  caseData.substring(caseData.indexOf("MR"),((caseData.indexOf("LL") + 2)));
     }
 
@@ -63,11 +79,12 @@ public class Judiciary {
         obj.setDocumentURL("https://www.judiciary.uk/judgments/r-v-zephaniah-mcleod/");
         obj.getJudiciaryWebPage();
         obj.parseJudiciaryPage();
-        obj.getPdfURlFromWebPage();
-        System.out.println(obj.pdfURL);
+
+
+//
         System.out.println(obj.dateOfTrial);
         System.out.println(obj.courtName);
-        System.out.println(obj.judgeName);
+//        System.out.println(obj.judgeName);
 
     }
 }
