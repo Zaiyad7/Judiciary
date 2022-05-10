@@ -2,38 +2,30 @@ package com.zaiyad;
 import org.jsoup.nodes.Element;
 import java.io.IOException;
 import java.util.ArrayList;
-import org.jsoup.nodes.Document;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.select.Elements;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.HashMap;
 
 public class JudiciaryWebCrawler {
+public HashMap<String,Judiciary> judiciaryLinkToCaseMap = new HashMap<>();
 
-    public String caseCourt;
-    public String courtMatch;
-    public String caseDate;
-    public String caseText;
-    public String titleCheck = "Judgments";
-    public String caseDateOld;
-    public String caseTextOld;
-    public org.jsoup.nodes.Document doc;
-    public static String url;
+
 
     public static void main(String[] args) throws  InterruptedException {
+      JudiciaryWebCrawler obj = new JudiciaryWebCrawler();
 
-        JudiciaryWebCrawler obj = new JudiciaryWebCrawler();
-        obj.judiciaryCrawler();
-
+      obj.judiciaryCrawler();
 
     }
     public void judiciaryCrawler() throws InterruptedException {
 
             for (int i = 1; i < 1000; i++) {
                 String pageNum = (i) + "/?filter_type=judgment";
-                url = "https://www.judiciary.uk/judgments/page/" + pageNum;
-                crawl(1, url, new ArrayList<String>());
+                String urlPage = "https://www.judiciary.uk/judgments/page/" + pageNum;
+                crawl(1, urlPage, new ArrayList<String>());
 
 
 
@@ -45,11 +37,13 @@ public class JudiciaryWebCrawler {
 
     public void crawl(int level, String url, ArrayList<String> visited) throws InterruptedException {
         if(level <=10) {
-            Document doc = request(url,visited);
+            Judiciary judiciaryCase = request(url,visited);
             Thread.sleep(2000);
-            if (doc != null){
-                for(Element link : doc.select("h5.entry-title > a[href]")) {
+            if (judiciaryCase.document != null){
+                for(Element link : judiciaryCase.document.select("h5.entry-title > a[href]")) {
+
                     String next_link = link.absUrl("href");
+                    judiciaryLinkToCaseMap.put(next_link,judiciaryCase);
                     if(visited.contains(next_link) == false) {
                         crawl(level++, next_link, visited);
                     }
@@ -59,12 +53,14 @@ public class JudiciaryWebCrawler {
         }
     }
 
-    public void courtMatcher() {
-        String[] arrOfCourt = this.courtMatch.split(" ", 0);
+    public void courtMatcher(Judiciary judiciaryCase) {
+
+        String[] arrOfCourt = judiciaryCase.courtMatch.split(" ", 0);
         StringBuffer sb = new StringBuffer();
         StringBuffer sb2 = new StringBuffer();
+
         try {
-            if (!doc.title().contains(titleCheck)) {
+            if (!judiciaryCase.document.title().contains(judiciaryCase.titleCheck)) {
                 for (int i = 4; i < 6; i++) {
                     sb.append(arrOfCourt[i]);
                 }
@@ -76,14 +72,14 @@ public class JudiciaryWebCrawler {
                     }
                 }
                 if (!str.contains("Court")) {
-                    System.out.println("Court name not available");
+                    judiciaryCase.courtName = "Court name not available";
 
                 } else if (str.contains("of")) {
                     String str2 = sb2.toString();
-                    System.out.println("Court name: " + str2);
+                    judiciaryCase.courtName = ("Court name: " + str2);
 
                 } else {
-                    System.out.println("Court name: " + str);
+                    judiciaryCase.courtName =("Court name: " + str);
                 }
             }
         } catch (ArrayIndexOutOfBoundsException a) {
@@ -91,89 +87,90 @@ public class JudiciaryWebCrawler {
                 sb.append(arrOfCourt[i]);
             }
                 String str3 = sb.toString();
-                System.out.println("Court name: " + str3);
+                judiciaryCase.courtName =("Court name: " + str3);
             }
         }
 
 
-    public void dateMatcher() {
-        if (!doc.title().contains(titleCheck)) {
+    public void dateMatcher(Judiciary judiciaryCase) {
+
+        if (!judiciaryCase.document.title().contains(judiciaryCase.titleCheck)) {
             Pattern ptD = Pattern.compile("Date(.*)");
-            Matcher mtD = ptD.matcher(caseDate);
-            boolean isFound = caseDate.contains("Date");
+            Matcher mtD = ptD.matcher(judiciaryCase.caseDate);
+            boolean isFound = judiciaryCase.caseDate.contains("Date");
 
             Pattern ptD2 = Pattern.compile("\\d{1,2}\\s\\w*\\s\\d\\d\\d\\d");
-            Matcher mtD2 = ptD2.matcher(caseDate);
+            Matcher mtD2 = ptD2.matcher(judiciaryCase.caseDate);
             boolean mtD2Found = mtD2.find();
 
-            boolean isOldFound = caseDateOld.contains("Date");
-            Matcher mtDO2 = ptD2.matcher(caseDateOld);
+            boolean isOldFound = judiciaryCase.caseDateOld.contains("Date");
+            Matcher mtDO2 = ptD2.matcher(judiciaryCase.caseDateOld);
             boolean mtDO2Found = mtDO2.find();
 
             if (isFound) {
                 boolean mtDFound = mtD.find();
                 String date = mtD.group(1);
-                System.out.println("Trial date: " + date);
+                judiciaryCase.dateOfTrial =("Trial date: " + date);
 
             } else if (mtD2Found) {
                 String dateAlt = mtD2.group();
-                System.out.println("Trial date: " + dateAlt);
+                judiciaryCase.dateOfTrial =("Trial date: " + dateAlt);
 
             } else if (isOldFound) {
-                Matcher mtDO = ptD.matcher(caseDateOld);
+                Matcher mtDO = ptD.matcher(judiciaryCase.caseDateOld);
                 boolean mtDOFound = mtDO.find();
                 String dateOld = mtDO.group(1);
-                System.out.println("Trial date: " + dateOld);
+                judiciaryCase.dateOfTrial =("Trial date: " + dateOld);
 
             } else if (mtDO2Found) {
                 String dateAltOld = mtDO2.group();
-                System.out.println("Trial date: " + dateAltOld);
+                judiciaryCase.dateOfTrial =("Trial date: " + dateAltOld);
 
             } else {
-                System.out.println("Trial date is not available");
+                judiciaryCase.dateOfTrial = "Trial date is not available";
+
             }
         }
     }
-    public void judgeMatcher() {
-        if (!doc.title().contains(titleCheck)) {
+    public void judgeMatcher(Judiciary judiciaryCase) {
+
+        if (!judiciaryCase.document.title().contains(judiciaryCase.titleCheck)) {
             Pattern ptJ = Pattern.compile("(Before|BEFORE|before)(.*)(Between|BETWEEN|between|B e t w e e n|B E T W E E N|Re)");
-            Matcher mtJ = ptJ.matcher(caseText);
+            Matcher mtJ = ptJ.matcher(judiciaryCase.caseText);
             boolean mtJFound = mtJ.find();
 
             Pattern ptJ2 = Pattern.compile("^Between|BETWEEN|B E T W E E N");
-            Matcher mtJ2 = ptJ2.matcher(caseText);
+            Matcher mtJ2 = ptJ2.matcher(judiciaryCase.caseText);
             boolean mtJ2Found = mtJ2.find();
 
-            Matcher mtJO = ptJ.matcher(caseTextOld);
+            Matcher mtJO = ptJ.matcher(judiciaryCase.caseTextOld);
             boolean mtJOFound = mtJO.find();
 
             if (mtJFound) {
-                System.out.println("Judge name " + mtJ.group(2));
+                judiciaryCase.judgeName =("Judge name " + mtJ.group(2));
 
             } else if (mtJ2Found){
-                System.out.println("Judge name not available");
+
+                judiciaryCase.judgeName = "Judge name not available";
 
             } else if (mtJOFound){
-                System.out.println("Judge name " + mtJO.group(2));
+                judiciaryCase.judgeName =("Judge name " + mtJO.group(2));
 
             } else {
-                System.out.println("Judge/Party info: " + caseText + caseTextOld);
+                judiciaryCase.judgeName =("Judge/Party info: " + judiciaryCase.caseText + judiciaryCase.caseTextOld);
             }
         }
 
 
     }
-    public void titleMatcher() {
-        if (!doc.title().contains("Decisions – guidance for Proscribed Organisations Tribunal")) {
+    public void titleMatcher(Judiciary judiciaryCase) {
 
-            if (doc.title().contains(titleCheck)) {
-                String[] arrOfTitle = this.url.split("\\/");
-                System.out.println("Page: " + arrOfTitle[5]);
+        if (!judiciaryCase.document.title().contains("Decisions – guidance for Proscribed Organisations Tribunal")) {
 
-            } else {
-                String[] arrOfTitle = doc.title().split("\\|");
-                System.out.println("Title: " + arrOfTitle[0]);
-            }
+                String[] arrOfTitle = judiciaryCase.document.title().split("\\|");
+                if (!arrOfTitle[0].contains("Judgments")) {
+                    judiciaryCase.title = ("Title: " + arrOfTitle[0]);
+                }
 
         } else {
             System.out.println("All reports printed");
@@ -181,33 +178,47 @@ public class JudiciaryWebCrawler {
         }
 
     }
-    private  Document request(String url, ArrayList<String> v) {
+    private  Judiciary request(String url, ArrayList<String> v) {
+
         try {
+            Judiciary judiciaryCase = new Judiciary();
             Connection con = Jsoup.connect(url);
-            this.doc = con.get();
+            judiciaryCase.document = con.get();
+
             if (con.response().statusCode() == 200) {
 
-                Elements page = doc.select("p[style*=center]");
-                Elements pageDate = doc.select("p[style*=right]");
-                Elements pageCourt = doc.select("p:containsOwn(COURT)");
-                Elements courtCheck = doc.select("span > a[href]");
-                Elements dateOld = doc.select("p[align*=right]");
-                Elements pageOld = doc.select("p[align*=center]");
+                Elements page = judiciaryCase.document.select("p[style*=center]");
+                Elements pageDate = judiciaryCase.document.select("p[style*=right]");
+                Elements pageCourt = judiciaryCase.document.select("p:containsOwn(COURT)");
+                Elements courtCheck = judiciaryCase.document.select("span > a[href]");
+                Elements dateOld = judiciaryCase.document.select("p[align*=right]");
+                Elements pageOld = judiciaryCase.document.select("p[align*=center]");
 
-                this.caseCourt = pageCourt.text();
-                this.courtMatch = courtCheck.text();
-                this.caseDate = pageDate.text();
-                this.caseText = page.text();
-                this.caseDateOld = dateOld.text();
-                this.caseTextOld = pageOld.text();
 
-                this.titleMatcher();
-                this.dateMatcher();
-                this.courtMatcher();
-                this.judgeMatcher();
 
+                judiciaryCase.caseCourt = pageCourt.text();
+                judiciaryCase.courtMatch = courtCheck.text();
+                judiciaryCase.caseDate = pageDate.text();
+                judiciaryCase.caseText = page.text();
+                judiciaryCase.caseDateOld = dateOld.text();
+                judiciaryCase.caseTextOld = pageOld.text();
+
+                this.titleMatcher(judiciaryCase);
+                this.dateMatcher(judiciaryCase);
+                this.courtMatcher(judiciaryCase);
+                this.judgeMatcher(judiciaryCase);
+
+                if (!judiciaryCase.document.title().contains(judiciaryCase.titleCheck)) {
+
+                    System.out.println(judiciaryCase.title);
+                    System.out.println(judiciaryCase.dateOfTrial);
+                    System.out.println(judiciaryCase.courtName);
+                    System.out.println(judiciaryCase.judgeName);
+
+                }
                 v.add(url);
-                return doc;
+
+                return judiciaryCase;
             }
             return null;
         }
