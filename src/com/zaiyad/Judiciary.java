@@ -21,6 +21,7 @@ public class Judiciary {
     public String dateOfTrial;
     public String judgeName;
     public static String pdfURL;
+    public String casePdfText;
     public String title;
     public String caseDateOld;
     public String caseTextOld;
@@ -42,17 +43,17 @@ public class Judiciary {
     public void getJudiciaryWebPage() throws IOException {
         this.doc = Jsoup.connect(documentURL).get();
     }
-
-    public void getPdfURlFromWebPage() throws IOException {
-        Elements links = doc.select("a[href]");
-        String[] urls = new String[links.size()];
-        for (int i = 0; i < links.size(); i++) {
-            urls[i] = links.get(i).attr("href");
-
-        }
-        this.pdfURL = urls[51];
+//
+//    public void getPdfURlFromWebPage() throws IOException {
+//        Elements links = doc.select("a[href]");
+//        String[] urls = new String[links.size()];
+//        for (int i = 0; i < links.size(); i++) {
+//            urls[i] = links.get(i).attr("href");
+//
+//        }
+//        this.pdfURL = urls[51];
 //        System.out.println(this.pdfURL);
-    }
+//    }
 
 //    public void parseJudiciaryPage() {
 
@@ -78,8 +79,7 @@ public class Judiciary {
             InputStream downloadedPdfFileStream = new URL(pdfURL).openStream();
             PDDocument pdfDocument = PDDocument.load(downloadedPdfFileStream);
             PDFTextStripper pdfStripper = new PDFTextStripper();
-            String pdfText = pdfStripper.getText(pdfDocument);
-            System.out.println(pdfText);
+            this.casePdfText = pdfStripper.getText(pdfDocument);
             pdfDocument.close();
     }
 //

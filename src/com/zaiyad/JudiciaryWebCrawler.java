@@ -1,4 +1,5 @@
 package com.zaiyad;
+
 import org.jsoup.nodes.Element;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -14,13 +15,13 @@ public HashMap<String,Judiciary> judiciaryLinkToCaseMap = new HashMap<>();
 
 
 
-    public static void main(String[] args) throws  InterruptedException {
+    public static void main(String[] args) throws InterruptedException  {
       JudiciaryWebCrawler obj = new JudiciaryWebCrawler();
 
       obj.judiciaryCrawler();
 
     }
-    public void judiciaryCrawler() throws InterruptedException {
+    public void judiciaryCrawler() throws InterruptedException  {
 
             for (int i = 1; i < 1000; i++) {
                 String pageNum = (i) + "/?filter_type=judgment";
@@ -178,6 +179,19 @@ public HashMap<String,Judiciary> judiciaryLinkToCaseMap = new HashMap<>();
         }
 
     }
+    public void pdfExtractor(Judiciary judiciaryCase) throws IOException {
+
+        Elements links = judiciaryCase.document.select("a[href]");
+        String[] urls = new String[links.size()];
+        for (int i = 0; i < links.size(); i++) {
+            urls[i] = links.get(i).attr("href");
+            if (urls[i].contains("pdf")) {
+                Judiciary.pdfURL = urls[i];
+                judiciaryCase.getPdfFromWebPage();
+            }
+        }
+
+    }
     private  Judiciary request(String url, ArrayList<String> v) {
 
         try {
@@ -196,6 +210,7 @@ public HashMap<String,Judiciary> judiciaryLinkToCaseMap = new HashMap<>();
 
 
 
+
                 judiciaryCase.caseCourt = pageCourt.text();
                 judiciaryCase.courtMatch = courtCheck.text();
                 judiciaryCase.caseDate = pageDate.text();
@@ -203,10 +218,11 @@ public HashMap<String,Judiciary> judiciaryLinkToCaseMap = new HashMap<>();
                 judiciaryCase.caseDateOld = dateOld.text();
                 judiciaryCase.caseTextOld = pageOld.text();
 
-                this.titleMatcher(judiciaryCase);
-                this.dateMatcher(judiciaryCase);
-                this.courtMatcher(judiciaryCase);
-                this.judgeMatcher(judiciaryCase);
+                  this.pdfExtractor(judiciaryCase);
+                  this.titleMatcher(judiciaryCase);
+                  this.dateMatcher(judiciaryCase);
+                  this.courtMatcher(judiciaryCase);
+                  this.judgeMatcher(judiciaryCase);
 
                 if (!judiciaryCase.document.title().contains(judiciaryCase.titleCheck)) {
 
