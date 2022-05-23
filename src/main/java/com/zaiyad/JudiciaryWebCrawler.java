@@ -12,18 +12,21 @@ import java.util.HashMap;
 
 public class JudiciaryWebCrawler {
 public HashMap<String,Judiciary> judiciaryLinkToCaseMap = new HashMap<>();
+public int pageCount;
 
 
 
     public static void main(String[] args) throws InterruptedException  {
-      JudiciaryWebCrawler obj = new JudiciaryWebCrawler();
-
-      obj.judiciaryCrawler();
 
     }
+
+/* Generates page urls which allows crawler to traverse all the pages on the site, the maximum page number to crawl can be
+set with setPageCount method and passing in the page number, this method also calls the crawl method and must be called to
+start the program.
+ */
     public void judiciaryCrawler() throws InterruptedException  {
 
-            for (int i = 1; i < 1000; i++) {
+            for (int i = 1; i < pageCount; i++) {
                 String pageNum = (i) + "/?filter_type=judgment";
                 String urlPage = "https://www.judiciary.uk/judgments/page/" + pageNum;
                 crawl(1, urlPage, new ArrayList<String>());
@@ -33,18 +36,25 @@ public HashMap<String,Judiciary> judiciaryLinkToCaseMap = new HashMap<>();
             }
 
     }
+// Sets the maximum page number for the crawler to traverse through and is stored in pageCount attribute.
+
+    public void setPageCount(int pageNumber) {
+        this.pageCount = pageNumber;
+
+    }
 
 
+/* Traverses through all the reports on the page by calling crawl method recursively, calls the request method
+ and this method itself is called in judiciaryCrawler.
+ */
 
     public void crawl(int level, String url, ArrayList<String> visited) throws InterruptedException {
         if(level <=10) {
             Judiciary judiciaryCase = request(url,visited);
-            Thread.sleep(2000);
+            Thread.sleep(1000);
             if (judiciaryCase.document != null){
                 for(Element link : judiciaryCase.document.select("h5.entry-title > a[href]")) {
-
                     String next_link = link.absUrl("href");
-                    judiciaryLinkToCaseMap.put(next_link,judiciaryCase);
                     if(visited.contains(next_link) == false) {
                         crawl(level++, next_link, visited);
                     }
@@ -53,6 +63,8 @@ public HashMap<String,Judiciary> judiciaryLinkToCaseMap = new HashMap<>();
 
         }
     }
+
+// Matches and stores the name of the court in courtName attribute and is called in request method.
 
     public void courtMatcher(Judiciary judiciaryCase) {
 
@@ -92,6 +104,7 @@ public HashMap<String,Judiciary> judiciaryLinkToCaseMap = new HashMap<>();
             }
         }
 
+// Matches and stores the trial date in dateOfTrial attribute and is called in request method.
 
     public void dateMatcher(Judiciary judiciaryCase) {
 
@@ -133,6 +146,8 @@ public HashMap<String,Judiciary> judiciaryLinkToCaseMap = new HashMap<>();
             }
         }
     }
+// Matches and stores the judge name in judgeName attribute and is called in request method.
+
     public void judgeMatcher(Judiciary judiciaryCase) {
 
         if (!judiciaryCase.document.title().contains(judiciaryCase.titleCheck)) {
@@ -164,6 +179,8 @@ public HashMap<String,Judiciary> judiciaryLinkToCaseMap = new HashMap<>();
 
 
     }
+// Stores the title of report in title attribute and is called in request method.
+
     public void titleMatcher(Judiciary judiciaryCase) {
 
         if (!judiciaryCase.document.title().contains("Decisions – guidance for Proscribed Organisations Tribunal")) {
@@ -179,19 +196,27 @@ public HashMap<String,Judiciary> judiciaryLinkToCaseMap = new HashMap<>();
         }
 
     }
+/* Extracts the pdf text where available and stores in casePdfText attribute, by calling setPdfURL and getPdfFromWebPage
+methods in Judiciary class. This method is called in request.
+ */
     public void pdfExtractor(Judiciary judiciaryCase) throws IOException {
 
-        Elements links = judiciaryCase.document.select("a[href]");
+        Elements links = judiciaryCase.document.select("div > a[href]");
         String[] urls = new String[links.size()];
         for (int i = 0; i < links.size(); i++) {
             urls[i] = links.get(i).attr("href");
             if (urls[i].contains("pdf")) {
-                Judiciary.pdfURL = urls[i];
+                judiciaryCase.setPdfURL(urls[i]);
                 judiciaryCase.getPdfFromWebPage();
             }
         }
 
     }
+/* Creates a Judiciary class object to store case information by calling Extractor and Matcher methods, using these to
+populate attributes in the created Judiciary object and storing this in a hashmap with the case url as the key and the
+object as the value. Returns judiciaryCase object to be used in crawl method.
+ */
+
     private  Judiciary request(String url, ArrayList<String> v) {
 
         try {
@@ -201,13 +226,13 @@ public HashMap<String,Judiciary> judiciaryLinkToCaseMap = new HashMap<>();
 
             if (con.response().statusCode() == 200) {
 
+
                 Elements page = judiciaryCase.document.select("p[style*=center]");
                 Elements pageDate = judiciaryCase.document.select("p[style*=right]");
                 Elements pageCourt = judiciaryCase.document.select("p:containsOwn(COURT)");
                 Elements courtCheck = judiciaryCase.document.select("span > a[href]");
                 Elements dateOld = judiciaryCase.document.select("p[align*=right]");
                 Elements pageOld = judiciaryCase.document.select("p[align*=center]");
-
 
 
 
@@ -230,6 +255,8 @@ public HashMap<String,Judiciary> judiciaryLinkToCaseMap = new HashMap<>();
                     System.out.println(judiciaryCase.dateOfTrial);
                     System.out.println(judiciaryCase.courtName);
                     System.out.println(judiciaryCase.judgeName);
+
+                   judiciaryLinkToCaseMap.put(url,judiciaryCase);
 
                 }
                 v.add(url);
