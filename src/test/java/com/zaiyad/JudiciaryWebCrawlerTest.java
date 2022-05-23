@@ -18,7 +18,7 @@ class JudiciaryWebCrawlerTest {
  @BeforeAll
  public void setupAll() throws InterruptedException {
      testObj = new JudiciaryWebCrawler();
-     testObj.setPageCount(2);
+     testObj.setPageCount(5);
      test1 = new Judiciary();
      test2 = new Judiciary();
      testObj.judiciaryCrawler();
@@ -32,7 +32,7 @@ class JudiciaryWebCrawlerTest {
     }
     @Test
     public void shouldReturnMapSize()  {
-        assertEquals(10,testObj.judiciaryLinkToCaseMap.size());
+        assertEquals(40,testObj.judiciaryLinkToCaseMap.size());
 
     }
     @Test
