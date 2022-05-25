@@ -10,8 +10,10 @@ crawl through every page of the website and calling judiciaryCrawler method to s
  */
     public static void main(String[] args) throws InterruptedException {
         JudiciaryWebCrawler myObj = new JudiciaryWebCrawler();
-        myObj.setPageCount(1000);
+        ExcelExporter obj = new ExcelExporter();
+        myObj.setPageCount(2);
         myObj.judiciaryCrawler();
+        obj.ExcelExporter(myObj);
 
     }
     }

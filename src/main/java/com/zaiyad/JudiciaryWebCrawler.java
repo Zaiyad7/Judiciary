@@ -1,5 +1,6 @@
 package com.zaiyad;
 
+import com.zaiyad.programs.ExcelExporter;
 import org.jsoup.nodes.Element;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -13,6 +14,7 @@ import java.util.HashMap;
 public class JudiciaryWebCrawler {
 public HashMap<String,Judiciary> judiciaryLinkToCaseMap = new HashMap<>();
 public int pageCount;
+
 
 
 
@@ -89,10 +91,10 @@ start the program.
 
                 } else if (str.contains("of")) {
                     String str2 = sb2.toString();
-                    judiciaryCase.courtName = ("Court name: " + str2);
+                    judiciaryCase.courtName = ( str2);
 
                 } else {
-                    judiciaryCase.courtName =("Court name: " + str);
+                    judiciaryCase.courtName =( str);
                 }
             }
         } catch (ArrayIndexOutOfBoundsException a) {
@@ -100,7 +102,7 @@ start the program.
                 sb.append(arrOfCourt[i]);
             }
                 String str3 = sb.toString();
-                judiciaryCase.courtName =("Court name: " + str3);
+                judiciaryCase.courtName =( str3);
             }
         }
 
@@ -124,21 +126,21 @@ start the program.
             if (isFound) {
                 boolean mtDFound = mtD.find();
                 String date = mtD.group(1);
-                judiciaryCase.dateOfTrial =("Trial date: " + date);
+                judiciaryCase.dateOfTrial =(date);
 
             } else if (mtD2Found) {
                 String dateAlt = mtD2.group();
-                judiciaryCase.dateOfTrial =("Trial date: " + dateAlt);
+                judiciaryCase.dateOfTrial =( dateAlt);
 
             } else if (isOldFound) {
                 Matcher mtDO = ptD.matcher(judiciaryCase.caseDateOld);
                 boolean mtDOFound = mtDO.find();
                 String dateOld = mtDO.group(1);
-                judiciaryCase.dateOfTrial =("Trial date: " + dateOld);
+                judiciaryCase.dateOfTrial =( dateOld);
 
             } else if (mtDO2Found) {
                 String dateAltOld = mtDO2.group();
-                judiciaryCase.dateOfTrial =("Trial date: " + dateAltOld);
+                judiciaryCase.dateOfTrial =( dateAltOld);
 
             } else {
                 judiciaryCase.dateOfTrial = "Trial date is not available";
@@ -163,17 +165,17 @@ start the program.
             boolean mtJOFound = mtJO.find();
 
             if (mtJFound) {
-                judiciaryCase.judgeName =("Judge name " + mtJ.group(2));
+                judiciaryCase.judgeName =( mtJ.group(2));
 
             } else if (mtJ2Found){
 
                 judiciaryCase.judgeName = "Judge name not available";
 
             } else if (mtJOFound){
-                judiciaryCase.judgeName =("Judge name " + mtJO.group(2));
+                judiciaryCase.judgeName =( mtJO.group(2));
 
             } else {
-                judiciaryCase.judgeName =("Judge/Party info: " + judiciaryCase.caseText + judiciaryCase.caseTextOld);
+                judiciaryCase.judgeName =( judiciaryCase.caseText + judiciaryCase.caseTextOld);
             }
         }
 
@@ -187,7 +189,7 @@ start the program.
 
                 String[] arrOfTitle = judiciaryCase.document.title().split("\\|");
                 if (!arrOfTitle[0].contains("Judgments")) {
-                    judiciaryCase.title = ("Title: " + arrOfTitle[0]);
+                    judiciaryCase.title = ( arrOfTitle[0]);
                 }
 
         } else {
@@ -249,6 +251,7 @@ object as the value. Returns judiciaryCase object to be used in crawl method.
                   this.courtMatcher(judiciaryCase);
                   this.judgeMatcher(judiciaryCase);
 
+
                 if (!judiciaryCase.document.title().contains(judiciaryCase.titleCheck)) {
 
                     System.out.println(judiciaryCase.title);
@@ -256,6 +259,7 @@ object as the value. Returns judiciaryCase object to be used in crawl method.
                     System.out.println(judiciaryCase.courtName);
                     System.out.println(judiciaryCase.judgeName);
 
+                    judiciaryCase.documentURL = url;
                    judiciaryLinkToCaseMap.put(url,judiciaryCase);
 
                 }

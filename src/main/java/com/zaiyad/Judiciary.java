@@ -51,6 +51,10 @@ public class Judiciary {
 
 // Obtains the html information from the url of the case and stores in doc attribute.
 
+    public String setCourtName() {
+        return this.courtName;
+    }
+
     public void getJudiciaryWebPage() throws IOException {
         this.doc = Jsoup.connect(documentURL).get();
     }
