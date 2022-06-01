@@ -23,6 +23,10 @@ public class Judiciary {
     public String pdfURL;
     public String casePdfText;
     public String title;
+    public String claimantName;
+    public String defendantName;
+    public String claimantRep;
+    public String defendantRep;
     public String caseDateOld;
     public String caseTextOld;
     public String caseCourt;

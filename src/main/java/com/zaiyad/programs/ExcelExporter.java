@@ -10,7 +10,7 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 public class ExcelExporter {
-JudiciaryWebCrawler newObj = new JudiciaryWebCrawler();
+
 
     public void ExcelExporter(JudiciaryWebCrawler newObj) {
         XSSFWorkbook workbook = new XSSFWorkbook();
@@ -32,6 +32,15 @@ JudiciaryWebCrawler newObj = new JudiciaryWebCrawler();
             cellDocument.setCellValue("documentUrl");
             Cell cellPdf = headRow.createCell(6);
             cellPdf.setCellValue("pdfUrl");
+            Cell cellClaimant = headRow.createCell(7);
+            cellClaimant.setCellValue("claimantName");
+            Cell cellDefendant = headRow.createCell(8);
+            cellDefendant.setCellValue("defendantName");
+            Cell cellClaimantRep = headRow.createCell(9);
+            cellClaimantRep.setCellValue("claimantRep");
+            Cell cellDefendantRep = headRow.createCell(10);
+            cellDefendantRep.setCellValue("defendantRep");
+
 
             for (Judiciary j : newObj.judiciaryLinkToCaseMap.values()) {
                 Row row = sheet.createRow(++rowCount);
@@ -47,6 +56,14 @@ JudiciaryWebCrawler newObj = new JudiciaryWebCrawler();
                 cell.setCellValue(j.documentURL);
                 cell = row.createCell(6);
                 cell.setCellValue(j.pdfURL);
+                cell = row.createCell(7);
+                cell.setCellValue(j.claimantName);
+                cell = row.createCell(8);
+                cell.setCellValue(j.defendantName);
+                cell = row.createCell(9);
+                cell.setCellValue(j.claimantRep);
+                cell = row.createCell(10);
+                cell.setCellValue(j.defendantRep);
 
             }
 

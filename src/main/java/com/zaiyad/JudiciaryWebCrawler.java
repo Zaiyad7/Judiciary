@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.select.Elements;
+
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.HashMap;
@@ -19,7 +21,11 @@ public int pageCount;
 
 
     public static void main(String[] args) throws InterruptedException  {
-
+        JudiciaryWebCrawler obj = new JudiciaryWebCrawler();
+        obj.setPageCount(7);
+        obj.judiciaryCrawler();
+        String test = obj.judiciaryLinkToCaseMap.get("https://www.judiciary.uk/judgments/committal-for-contempt-of-court-anslow/").casePdfText;
+//        System.out.println(test);
     }
 
 /* Generates page urls which allows crawler to traverse all the pages on the site, the maximum page number to crawl can be
@@ -73,11 +79,17 @@ start the program.
         String[] arrOfCourt = judiciaryCase.courtMatch.split(" ", 0);
         StringBuffer sb = new StringBuffer();
         StringBuffer sb2 = new StringBuffer();
-
+        Pattern ptCourt = Pattern.compile("(?<=IN THE)\\s\\w*\\s\\w*");
+        Matcher mtCourt = ptCourt.matcher(judiciaryCase.caseCourt.toUpperCase());
+        boolean mtC = mtCourt.find();
+        Pattern ptCourt2 = Pattern.compile("\\w*\\’?\\s(?=COURT)");
+        Matcher mtCourt2 = ptCourt2.matcher(judiciaryCase.caseCourt.toUpperCase());
+        boolean mtC2 = mtCourt2.find();
         try {
             if (!judiciaryCase.document.title().contains(judiciaryCase.titleCheck)) {
                 for (int i = 4; i < 6; i++) {
                     sb.append(arrOfCourt[i]);
+
                 }
                 String str = sb.toString();
 
@@ -87,7 +99,14 @@ start the program.
                     }
                 }
                 if (!str.contains("Court")) {
-                    judiciaryCase.courtName = "Court name not available";
+                    if (mtC) {
+                        judiciaryCase.courtName = mtCourt.group();
+                    } else if (mtC2){
+                        judiciaryCase.courtName = (mtCourt2.group() + " COURT");
+                    } else {
+                        System.out.println(judiciaryCase.caseCourt);
+                        judiciaryCase.courtName = "Court name not available";
+                    }
 
                 } else if (str.contains("of")) {
                     String str2 = sb2.toString();
@@ -102,7 +121,14 @@ start the program.
                 sb.append(arrOfCourt[i]);
             }
                 String str3 = sb.toString();
-                judiciaryCase.courtName =( str3);
+            if (str3.contains("CourtsandTribunalsJudiciary")){
+
+               if (mtC) {
+                   judiciaryCase.courtName = mtCourt.group();
+               }
+            } else {
+                judiciaryCase.courtName = (str3);
+            }
             }
         }
 
@@ -115,7 +141,7 @@ start the program.
             Matcher mtD = ptD.matcher(judiciaryCase.caseDate);
             boolean isFound = judiciaryCase.caseDate.contains("Date");
 
-            Pattern ptD2 = Pattern.compile("\\d{1,2}\\s\\w*\\s\\d\\d\\d\\d");
+            Pattern ptD2 = Pattern.compile("\\d{1,2}\\s[A-Z][a-z]*\\s\\d\\d\\d\\d");
             Matcher mtD2 = ptD2.matcher(judiciaryCase.caseDate);
             boolean mtD2Found = mtD2.find();
 
@@ -125,11 +151,15 @@ start the program.
 
             if (isFound) {
                 boolean mtDFound = mtD.find();
-                String date = mtD.group(1);
+                String date = mtD.group(1).replaceAll(":","").replaceAll("d","");
+                date.replaceAll(":","");
+                date.replaceAll("d:","");
                 judiciaryCase.dateOfTrial =(date);
 
             } else if (mtD2Found) {
                 String dateAlt = mtD2.group();
+                dateAlt.replaceAll(":","");
+                dateAlt.replaceAll("d:","");
                 judiciaryCase.dateOfTrial =( dateAlt);
 
             } else if (isOldFound) {
@@ -161,11 +191,25 @@ start the program.
             Matcher mtJ2 = ptJ2.matcher(judiciaryCase.caseText);
             boolean mtJ2Found = mtJ2.find();
 
+            Pattern ptJ3 = Pattern.compile("MR?r?(.*)QC");
+            Matcher mtJ3 = ptJ3.matcher(judiciaryCase.caseText);
+            boolean mtJ3Found = mtJ3.find();
+
             Matcher mtJO = ptJ.matcher(judiciaryCase.caseTextOld);
             boolean mtJOFound = mtJO.find();
 
-            if (mtJFound) {
-                judiciaryCase.judgeName =( mtJ.group(2));
+            if(mtJ3Found) {
+                judiciaryCase.judgeName = mtJ3.group().toUpperCase().replaceAll("AND|THE|HIS|HER|HONOUR|HON","");
+            }
+
+             else if (mtJFound) {
+
+                judiciaryCase.judgeName = ( mtJ.group(2).toUpperCase().replaceAll(":","").replaceAll("BEFORE","").replaceAll("HIS HONOUR","").replaceAll("BEFORE:","")
+                        .replaceAll("THE HONOURABLE","").replaceAll("THE RECORDER\\s\\w*\\s\\w*","").replaceAll(",","")
+                        .replaceAll("\\((.*?)\\)","").replaceAll("SITTING(.*)","").replaceAll("\\w*\\s(-v-)\\s\\w*\\s\\w*","").replaceAll("HIS|HER|","")
+                        .replaceAll("HONOUR","").replaceAll("THE|AND","").replaceAll("BETWEEN(.*)","").replaceAll("–([^–]+)–","")
+                        .replaceAll("RECORDER\\s\\w*\\s\\w*","").replaceAll("PRESIDENT\\s*\\w*\\s*\\w*(\\’\\w)?\\s*\\w*\\s*\\w*","").replaceAll("ORDER|HON|RESPONDENT|VICE","")
+                        .replaceAll("SENTENCING\\s\\w*\\s\\w*","").replaceAll("\\.",""));
 
             } else if (mtJ2Found){
 
@@ -175,11 +219,38 @@ start the program.
                 judiciaryCase.judgeName =( mtJO.group(2));
 
             } else {
-                judiciaryCase.judgeName =( judiciaryCase.caseText + judiciaryCase.caseTextOld);
+
+                judiciaryCase.judgeName =  ( judiciaryCase.caseText + judiciaryCase.caseTextOld).toUpperCase().replaceAll(":","").replaceAll("BEFORE","").replaceAll("HIS HONOUR","").replaceAll("BEFORE:","")
+                        .replaceAll("THE HONOURABLE","").replaceAll("THE RECORDER\\s\\w*\\s\\w*","").replaceAll(",","")
+                        .replaceAll("\\((.*?)\\)","").replaceAll("SITTING(.*)","").replaceAll("\\w*\\s(-V-)\\s\\w*\\s\\w*","").replaceAll("HIS|HER|","")
+                        .replaceAll("HONOUR","").replaceAll("THE|AND","").replaceAll("BETWEEN(.*)","").replaceAll("–([^–]+)–","")
+                        .replaceAll("RECORDER\\s\\w*\\s\\w*","").replaceAll("PRESIDENT\\s*\\w*\\s*\\w*(\\’\\w)?\\s*\\w*\\s*\\w*","").replaceAll("ORDER|HON|RESPONDENT|VICE","")
+                        .replaceAll("SENTENCING\\s\\w*\\s\\w*","").replaceAll("\\.","");
+
             }
         }
 
 
+    }
+
+
+    public void partyMatcher(Judiciary judiciaryCase) {
+        if (!judiciaryCase.document.title().contains(judiciaryCase.titleCheck)) {
+            Pattern ptP = Pattern.compile("(Between:?|BETWEEN:?)(.*)");
+            Matcher mtP = ptP.matcher(judiciaryCase.caseText);
+            boolean mtPFound = mtP.find();
+
+            if (mtPFound) {
+               String[] arrOfParty = mtP.group(2).replaceAll(":","").replaceAll("\\((.*?)\\)","").split("-v-");
+               try {
+                   judiciaryCase.claimantName = (arrOfParty[0]);
+                   judiciaryCase.defendantName = (arrOfParty[1]);
+//                System.out.println(judiciaryCase.claimantName);
+               } catch (ArrayIndexOutOfBoundsException a) {
+                   judiciaryCase.claimantName = (arrOfParty[0]);
+               }
+            }
+        }
     }
 // Stores the title of report in title attribute and is called in request method.
 
@@ -210,9 +281,55 @@ methods in Judiciary class. This method is called in request.
             if (urls[i].contains("pdf")) {
                 judiciaryCase.setPdfURL(urls[i]);
                 judiciaryCase.getPdfFromWebPage();
+
             }
         }
 
+    }
+    public void pdfMatcher(Judiciary judiciaryCase) {
+        if (judiciaryCase.casePdfText != null) {
+
+
+            if (judiciaryCase.casePdfText.contains("appeared on")) {
+                String[] arrOfPdf = judiciaryCase.casePdfText.split("\\r?\\n|\\r");
+                ArrayList<String> repList = new ArrayList<>();
+
+                for ( String sentence : arrOfPdf) {
+                    Pattern ptL = Pattern.compile(".*(?=appeared on behalf)");
+                    Matcher mtL = ptL.matcher(sentence);
+                    boolean mtLFound = mtL.find();
+                    if (mtLFound) {
+                         repList.add(mtL.group());
+                    }
+                } if (repList.size() == 1) {
+   //                 System.out.println("Claimant rep " + repList.get(0));
+                    judiciaryCase.claimantRep = repList.get(0).replaceAll("\\(|\\)","");
+                } else if (repList.size() > 1) {
+  //                  System.out.println("Defendant rep " + repList.get(1));
+                    judiciaryCase.claimantRep = repList.get(0).replaceAll("\\(|\\)","");
+                    judiciaryCase.defendantRep = repList.get(1).replaceAll("\\(|\\)","");
+                }
+            } else if (judiciaryCase.casePdfText.contains("instructed by")) {
+                String[] arrOfRep = judiciaryCase.casePdfText.split("\\r?\\n|\\r");
+                ArrayList<String> repList2 = new ArrayList<>();
+
+                for (String sentence : arrOfRep) {
+                    Pattern ptR = Pattern.compile(".*(?=instructed by)");
+                    Matcher mtR = ptR.matcher(sentence);
+                    boolean mtRFound = mtR.find();
+                    if (mtRFound) {
+                        repList2.add(mtR.group());
+                    }
+                } if (repList2.size() == 1) {
+ //                   System.out.println("Claimant repi " + repList2.get(0));
+                    judiciaryCase.claimantRep = repList2.get(0).replaceAll("\\(|\\)","");
+                } else if (repList2.size() > 1) {
+ //                   System.out.println("Defendant repi " + repList2.get(1));
+                    judiciaryCase.claimantRep = repList2.get(0).replaceAll("\\(|\\)","");
+                    judiciaryCase.defendantRep = repList2.get(1).replaceAll("\\(|\\)","");
+                }
+            }
+        }
     }
 /* Creates a Judiciary class object to store case information by calling Extractor and Matcher methods, using these to
 populate attributes in the created Judiciary object and storing this in a hashmap with the case url as the key and the
@@ -250,14 +367,18 @@ object as the value. Returns judiciaryCase object to be used in crawl method.
                   this.dateMatcher(judiciaryCase);
                   this.courtMatcher(judiciaryCase);
                   this.judgeMatcher(judiciaryCase);
+                  this.partyMatcher(judiciaryCase);
+                  this.pdfMatcher(judiciaryCase);
+
+
 
 
                 if (!judiciaryCase.document.title().contains(judiciaryCase.titleCheck)) {
 
-                    System.out.println(judiciaryCase.title);
-                    System.out.println(judiciaryCase.dateOfTrial);
-                    System.out.println(judiciaryCase.courtName);
-                    System.out.println(judiciaryCase.judgeName);
+//                    System.out.println(judiciaryCase.title);
+//                    System.out.println(judiciaryCase.dateOfTrial);
+//                    System.out.println(judiciaryCase.courtName);
+//                    System.out.println(judiciaryCase.judgeName);
 
                     judiciaryCase.documentURL = url;
                    judiciaryLinkToCaseMap.put(url,judiciaryCase);
